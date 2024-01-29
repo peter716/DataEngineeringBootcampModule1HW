@@ -1,0 +1,116 @@
+SELECT
+	*
+FROM
+    yellow_taxi_trips t, 
+    zones zdo,
+    zones zpu
+WHERE
+	t."PULocationID" = zpu."LocationID" AND
+	t."DOLocationID" = zdo."LocationID"
+LIMIT 10;
+
+
+SELECT
+	*
+FROM
+    yellow_taxi_trips t JOIN zones zpu
+	  ON t."PULocationID" = zpu."LocationID" 
+	JOIN zones zdo
+	  ON t."DOLocationID" = zdo."LocationID"
+LIMIT 100;
+
+SELECT
+	tpep_pickup_datetime,
+	tpep_dropoff_datetime,
+	total_amount,
+	CONCAT(zpu."Borough", '/',zpu."Zone") AS "pickup_loc",
+	CONCAT(zdo."Borough",'/', zdo."Zone") AS "dropoff_loc"
+FROM
+    yellow_taxi_trips t JOIN zones zpu
+	  ON t."PULocationID" = zpu."LocationID" 
+	JOIN zones zdo
+	  ON t."DOLocationID" = zdo."LocationID"
+LIMIT 100;
+
+SELECT
+	tpep_pickup_datetime,
+	tpep_dropoff_datetime,
+	total_amount,
+	"PULocationID",
+	"DOLocationID"
+FROM
+    yellow_taxi_trips t 
+WHERE
+    "PULocationID" is NULL
+
+SELECT
+	tpep_pickup_datetime,
+	tpep_dropoff_datetime,
+	total_amount,
+	"PULocationID",
+	"DOLocationID"
+FROM
+    yellow_taxi_trips t 
+WHERE
+    "DOLocationID" NOT IN (SELECT "LocationID" FROM zones)
+	LIMIT 100
+
+
+DELETE FROM zones WHERE "LocationID" = 142
+
+SELECT
+	CAST(tpep_dropoff_datetime AS DATE) as "day",
+	COUNT(1)
+	
+FROM
+    yellow_taxi_trips t
+GROUP BY
+    CAST(tpep_dropoff_datetime AS DATE) ;
+
+
+SELECT
+	CAST(tpep_dropoff_datetime AS DATE) as "day",
+	COUNT(1)
+	
+FROM
+    yellow_taxi_trips t
+GROUP BY
+    CAST(tpep_dropoff_datetime AS DATE)
+ORDER BY "day" ASC;
+
+
+SELECT
+  lpep_pickup_datetime,
+  lpep_dropoff_datetime
+FROM 
+  green_taxi_data t
+WHERE
+  CAST(t.lpep_pickup_datetime AS DATE) = '2019-09-18'
+    AND CAST(t.lpep_dropoff_datetime AS DATE) = '2019-09-18';
+
+
+SELECT 
+    CAST(lpep_pickup_datetime AS DATE) AS trip_date,
+    MAX(EXTRACT(EPOCH FROM (lpep_dropoff_datetime - lpep_pickup_datetime))) AS max_duration
+FROM green_taxi_data
+GROUP BY trip_date
+ORDER BY max_duration DESC
+LIMIT 1;
+
+
+SELECT
+    z."Borough",
+    SUM(gtd.total_amount) AS total_amount_sum
+FROM
+    zones z
+JOIN
+    green_taxi_data gtd ON z."LocationID" = gtd."PULocationID"
+WHERE
+    CAST(gtd."lpep_pickup_datetime" AS DATE) = '2019-09-18'
+GROUP BY
+    z."Borough"
+HAVING
+    SUM(gtd."total_amount") > 50000
+ORDER BY
+    total_amount_sum DESC
+LIMIT 3;
